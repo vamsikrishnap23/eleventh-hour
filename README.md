@@ -78,3 +78,10 @@ Welcome to **Eleventh Hour**, a Flask web app designed to make code documentatio
    - Upload a file like App.js for a React app.
    - Enter details: Project Title: "Packing List Manager", Author: "Vamsi Krishna", Goal: "Make packing for trips easier".
    - Get final_document.docx with everything organized and ready to roll.
+
+## Contact
+
+For questions, support, or contributions, please reach out:
+
+- GitHub: [@vamsikrishnap23](https://github.com/vamsikrishnap23)
+- Email: vamsikrishnapullabhotla23@gmail.com
