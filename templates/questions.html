@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>EleventhHour - Project Details</title>
+    <link
+      rel="icon"
+      type="image/jpeg"
+      href="{{ url_for('static', filename='images/favicon.jpg') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #333333;
+        --button-bg: #007bff;
+        --button-text: #ffffff;
+        --error-color: #ff0000;
+        --success-color: #008000;
+        --input-bg: #f8f9fa;
+        --border-color: #cccccc;
+        --sidebar-bg: #f0f0f0;
+        --sidebar-active: #007bff;
+        --sidebar-active-text: #ffffff;
+      }
+
+      .dark-mode {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --button-bg: #0056b3;
+        --button-text: #ffffff;
+        --error-color: #ff5555;
+        --success-color: #55ff55;
+        --input-bg: #2a2a2a;
+        --border-color: #555555;
+        --sidebar-bg: #2a2a2a;
+        --sidebar-active: #0056b3;
+        --sidebar-active-text: #e0e0e0;
+      }
+
+      .logo-container {
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .logo {
+        height: 60px;
+        width: auto;
+        display: none;
+      }
+
+      .logo.light {
+        display: block;
+      }
+
+      .dark-mode .logo.light {
+        display: none;
+      }
+
+      .dark-mode .logo.dark {
+        display: block;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: all 0.3s ease;
+        display: flex;
+      }
+
+      .sidebar {
+        width: 50px;
+        background-color: var(--sidebar-bg);
+        padding: 20px 10px;
+        height: 100vh;
+        position: fixed;
+        transition: width 0.3s ease;
+        overflow: hidden;
+      }
+
+      .sidebar:hover {
+        width: 200px;
+      }
+
+      .sidebar h3 {
+        margin: 0 0 20px;
+        font-size: 18px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .sidebar:hover h3 {
+        opacity: 1;
+      }
+
+      .sidebar ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .sidebar li {
+        margin: 10px 0;
+      }
+
+      .sidebar a {
+        color: var(--text-color);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+
+      .sidebar a i {
+        font-size: 18px;
+        width: 30px;
+        text-align: center;
+      }
+
+      .sidebar a span {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .sidebar:hover a span {
+        opacity: 1;
+      }
+
+      .sidebar a.active {
+        background-color: var(--sidebar-active);
+        color: var(--sidebar-active-text);
+      }
+
+      .main-content {
+        margin-left: 70px;
+        padding: 20px;
+        flex-grow: 1;
+        transition: margin-left 0.3s ease;
+      }
+
+      .sidebar:hover ~ .main-content {
+        margin-left: 220px;
+      }
+
+      .error {
+        color: var(--error-color);
+      }
+
+      .success {
+        color: var(--success-color);
+      }
+
+      form {
+        margin: 20px 0;
+        max-width: 600px;
+      }
+
+      label {
+        display: block;
+        margin: 15px 0 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      input[type="submit"],
+      button {
+        margin: 20px 0;
+        padding: 10px 20px;
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      input[type="submit"]:hover,
+      button:hover {
+        opacity: 0.9;
+      }
+
+      .form-note {
+        font-size: 0.9em;
+        color: var(--text-color);
+        opacity: 0.7;
+        margin-top: 5px;
+      }
+
+      #theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 8px 16px;
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <h3>Steps</h3>
+      <ul>
+        <li>
+          <a
+            class="{% if current_step == 'upload' %}active{% endif %}"
+            href="{{ url_for('upload_files') }}"
+            ><i class="fas fa-upload"></i><span>Upload Files</span></a
+          >
+        </li>
+        <li>
+          <a
+            class="{% if current_step == 'analysis' %}active{% endif %}"
+            href="{{ url_for('analysis') }}"
+            ><i class="fas fa-code"></i><span>Analyze Code</span></a
+          >
+        </li>
+        <li>
+          <a class="{% if current_step == 'questions' %}active{% endif %}"
+            ><i class="fas fa-question-circle"></i
+            ><span>Answer Questions</span></a
+          >
+        </li>
+        <li>
+          <a
+            class="{% if current_step == 'generate' %}active{% endif %}"
+            href="{{ url_for('generate_document') }}"
+            ><i class="fas fa-file-alt"></i><span>Generate Document</span></a
+          >
+        </li>
+      </ul>
+    </div>
+
+    <div class="main-content">
+      <button id="theme-toggle">Toggle Dark Mode</button>
+      <div class="logo-container">
+        <img
+          src="{{ url_for('static', filename='images/logo-light.png') }}"
+          alt="EleventhHour Logo"
+          class="logo light"
+        />
+        <img
+          src="{{ url_for('static', filename='images/logo-dark.png') }}"
+          alt="EleventhHour Logo"
+          class="logo dark"
+        />
+      </div>
+      <h2>Enter Project Details</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <p class="{{ category }}">{{ message }}</p>
+      {% endfor %} {% endif %} {% endwith %}
+      <form method="post" action="{{ url_for('questions') }}">
+        <label for="project_title">Project Title:</label>
+        <input type="text" id="project_title" name="project_title" required />
+        <div class="form-note">
+          Enter the official title of your project (e.g., "Packing List
+          Manager").
+        </div>
+
+        <label for="author_name">Author Name:</label>
+        <input type="text" id="author_name" name="author_name" required />
+        <div class="form-note">Enter your full name as the primary author.</div>
+
+        <label for="author_reg_number">Author Registration Number:</label>
+        <input
+          type="text"
+          id="author_reg_number"
+          name="author_reg_number"
+          required
+        />
+        <div class="form-note">
+          Enter your registration or student ID number.
+        </div>
+
+        <label for="teammates"
+          >Teammates' Names and Registration Numbers:</label
+        >
+        <textarea id="teammates" name="teammates"></textarea>
+        <div class="form-note">
+          List teammates' names and registration numbers, one per line (e.g.,
+          "John Doe - 123456"). Leave blank if solo.
+        </div>
+
+        <label for="institution_department">Institution & Department:</label>
+        <input
+          type="text"
+          id="institution_department"
+          name="institution_department"
+          required
+        />
+        <div class="form-note">
+          Enter your institution and department (e.g., "XYZ University, Computer
+          Science").
+        </div>
+
+        <label for="guide_name">Guide Name:</label>
+        <input type="text" id="guide_name" name="guide_name" />
+        <div class="form-note">
+          Enter your project guide's name (optional, e.g., "Dr. Jane Smith").
+        </div>
+
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required />
+        <div class="form-note">
+          Enter the city for the certificate (e.g., "New York").
+        </div>
+
+        <label for="caption_prefix">Caption Prefix (e.g., Fig., Tab.):</label>
+        <input
+          type="text"
+          id="caption_prefix"
+          name="caption_prefix"
+          value="Fig."
+          required
+        />
+        <div class="form-note">
+          Prefix for figure captions in the document (default is "Fig.").
+        </div>
+
+        <label for="project_goal">Project Goal:</label>
+        <textarea id="project_goal" name="project_goal" required></textarea>
+        <div class="form-note">
+          Describe the main objective of your project (e.g., "Develop a tool to
+          manage packing lists").
+        </div>
+
+        <label for="project_audience">Project Audience:</label>
+        <textarea
+          id="project_audience"
+          name="project_audience"
+          required
+        ></textarea>
+        <div class="form-note">
+          Specify the target audience (e.g., "Travelers, Developers").
+        </div>
+
+        <input type="submit" value="Save Details" />
+      </form>
+      <a href="{{ url_for('analysis') }}">Back to Analysis</a>
+    </div>
+
+    <script>
+      // Load saved theme
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark-mode");
+      }
+
+      // Toggle theme
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        localStorage.setItem(
+          "theme",
+          document.body.classList.contains("dark-mode") ? "dark" : "light"
+        );
+      });
+    </script>
+  </body>
+</html>
