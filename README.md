@@ -26,7 +26,7 @@ Welcome to **Eleventh Hour**, a Flask web app designed to make code documentatio
 1. **Clone the Repo**:
 
    ```bash
-   git clone https://github.com/your-username/eleventh-hour.git
+   git clone https://github.com/vamsikrishnap23/eleventh-hour.git
    cd eleventh-hour
 
    ```
