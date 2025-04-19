@@ -25,7 +25,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './uploads'
-app.config['ALLOWED_EXTENSIONS'] = {'.py', '.js', '.jsx', '.ts', '.tsx', '.css', '.java', '.c', '.cpp', '.h', '.cs', '.go', '.rb', '.php'}
+app.config['ALLOWED_EXTENSIONS'] = {'.py', '.js', '.jsx', '.ts', '.tsx', '.css', '.java', '.c', '.cpp', '.h', '.cs', '.go', '.rb', '.php', '.html'}
 app.secret_key = 'super_secret_key'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
