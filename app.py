@@ -6,6 +6,7 @@ import subprocess
 import traceback
 import io
 from docx import Document
+from docx.shared import Pt, Inches, RGBColor
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import datetime
@@ -338,7 +339,7 @@ def generate_llm_section(model, prompt):
                     current_content = []
                 # Extract section name and normalize it
                 current_section = line.replace('#', '').strip().lower()
-            elif current_section and line:
+            elif current_section and line:  # Include non-empty lines, including bullets
                 current_content.append(line)
         
         # Save the last section's content
@@ -350,11 +351,14 @@ def generate_llm_section(model, prompt):
             
         # Ensure all required sections exist
         required_sections = ['abstract', 'acknowledgement', 'introduction', 'objectives', 
-                           'methodology', 'conclusion', 'future scope']
+                           'methodology', 'tools and technologies used', 'conclusion', 'future scope']
         for section in required_sections:
             if section not in sections:
                 sections[section] = f'[Section "{section}" not generated]'
                 
+        # Debug parsed sections
+        print(f"\n=== PARSED SECTIONS ===\n{json.dumps(sections, indent=2)}\n=== END PARSED SECTIONS ===")
+        
         return sections
     except Exception as e:
         if "429" in str(e):
@@ -363,19 +367,32 @@ def generate_llm_section(model, prompt):
             time.sleep(e.retry_delay.seconds)
         print(f"Error generating LLM section: {e}")
         return {
+            'abstract': '[Quota exceeded or error, please add manually]',
+            'acknowledgement': '[Quota exceeded or error, please add manually]',
             'introduction': '[Quota exceeded or error, please add manually]',
             'objectives': '[Quota exceeded or error, please add manually]',
             'methodology': '[Quota exceeded or error, please add manually]',
+            'tools and technologies used': '[Quota exceeded or error, please add manually]',
             'conclusion': '[Quota exceeded or error, please add manually]',
-            'future scope': '[Quota exceeded or error, please add manually]',
-            'acknowledgement': '[Quota exceeded or error, please add manually]',
-            'abstract': '[Quota exceeded or error, please add manually]'
+            'future scope': '[Quota exceeded or error, please add manually]'
         }
 
 def generate_word_document(analysis):
     doc = Document()
-    doc.styles['Normal'].font.name = 'Arial'
+
+    doc.styles['Normal'].font.name = 'Calibri'
     doc.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), 'Arial')
+
+    section = doc.sections[0]
+    section.left_margin = Inches(1)
+    section.right_margin = Inches(1)
+    section.top_margin = Inches(1)
+    section.bottom_margin = Inches(1)
+
+    for i in range(1, 10):  # Covers Heading 1 through Heading 9
+        if f'Heading {i}' in doc.styles:
+            style = doc.styles[f'Heading {i}']
+            style.font.color.rgb = RGBColor(0, 0, 0)  # Black
 
     # Initialize Gemini model
     model = genai.GenerativeModel('gemini-1.5-pro')
@@ -388,16 +405,17 @@ def generate_word_document(analysis):
 
     # Single prompt for all sections
     all_prompt = (
-        f"Generate the following sections for a formal project report based on the file '{list(analysis.keys())[0]}' with summary: '{analysis[list(analysis.keys())[0]]['summary']}'. "
-        f"The project goal is '{goal}' aimed at the audience '{project_details.get('audience', 'N/A')}'. Use code analysis data where relevant. "
-        "Structure the response with ### SectionName headers and content below each. Adopt a strictly impersonal, declarative tone suitable for an official report—avoid phrases like 'The analysis reveals', 'Based on the analysis', or any first-person references. Present content as established facts or recommendations without implying a narrator. Generate:\n"
-        "- ### Abstract: A concise academic abstract (100-150 words) summarizing the purpose, method (code review of {list(analysis.keys())[0]}'s language/features), and key findings.\n"
-        "- ### Acknowledgement: A formal acknowledgement (50-100 words) recognizing contributions from the author '{author_details.get('name', 'Unknown Author')}' and a placeholder for others (e.g., guide, teammates) in an official manner.\n"
-        "- ### Introduction: A concise introduction (100-150 words) outlining the purpose and context based on the project goal.\n"
-        "- ### Objectives: Concise objectives (50-100 words) detailing the aims to be achieved for the audience.\n"
-        "- ### Methodology: A concise methodology (100-150 words) describing the code review process for '{list(analysis.keys())[0]}', focusing on its language (e.g., JavaScript/React) and features (e.g., components, data flow).\n"
-        "- ### Conclusion: A concise conclusion (100-150 words) summarizing key findings from the analysis summaries: {', '.join([data['summary'] for data in analysis.values()])}.\n"
-        "- ### Future Scope: A concise future scope (100-150 words) proposing enhancements based on the analysis summaries."
+    f"Generate the following sections for a formal project report based on the file '{list(analysis.keys())[0]}' with summary: '{analysis[list(analysis.keys())[0]]['summary']}'. "
+    f"The project goal is '{goal}' aimed at the audience '{project_details.get('audience', 'N/A')}'. Use code analysis data where relevant. "
+    "Structure the response with ### SectionName headers and content below each. Adopt a strictly impersonal, declarative tone suitable for an official report—avoid phrases like 'The analysis reveals', 'Based on the analysis', or any first-person references. Present content as established facts or recommendations without implying a narrator. Generate:\n"
+    "- ### Abstract: A concise academic abstract (100-150 words) summarizing the purpose, method (code review of {list(analysis.keys())[0]}'s language/features), and key findings.\n"
+    "- ### Acknowledgement: A formal acknowledgement (50-100 words) recognizing contributions from the author '{author_details.get('name', 'Unknown Author')}' and a placeholder for others (e.g., guide, teammates) in an official manner.\n"
+    "- ### Introduction: A concise introduction (100-150 words) outlining the purpose and context based on the project goal.\n"
+    "- ### Objectives: Concise objectives (50-100 words) detailing the aims to be achieved for the audience.\n"
+    "- ### Methodology: A concise methodology (100-150 words) describing the code review process for '{list(analysis.keys())[0]}', focusing on its language (e.g., JavaScript/React) and features (e.g., components, data flow).\n"
+    "- ### Tools and Technologies Used: A concise bulleted list of the primary tools, programming languages, frameworks, libraries, and environments used in the project (e.g., Python, Flask, Gemini API, Mermaid CLI, ReportLab). Each item should be a single line with no additional description.\n"
+    "- ### Conclusion: A concise conclusion (100-150 words) summarizing key findings from the analysis summaries: {', '.join([data['summary'] for data in analysis.values()])}.\n"
+    "- ### Future Scope: A concise future scope (100-150 words) proposing enhancements based on the analysis summaries."
     )
     all_sections = generate_llm_section(model, all_prompt)
 
@@ -473,6 +491,22 @@ def generate_word_document(analysis):
     doc.add_heading('Methodology', level=2)
     doc.add_paragraph(all_sections.get('methodology', '[Section not generated]'))
 
+    # Tools and Technologies Used
+    doc.add_heading('Tools and Technologies Used', level=2)
+    tools_text = all_sections.get('tools and technologies used', '[Section not generated]')
+    if tools_text != '[Section not generated]' and tools_text.strip():
+        for line in tools_text.split('\n'):
+            line = line.strip()
+            if line:
+                # Remove bullet prefixes (* or -)
+                if line.startswith('* ') or line.startswith('- '):
+                    line = line[2:].strip()
+                # Add as a bulleted paragraph
+                p = doc.add_paragraph(style='ListBullet')
+                p.add_run(line)
+    else:
+        doc.add_paragraph(tools_text)
+
     # Results & Analysis
     doc.add_heading('Results & Analysis', level=2)
     for i, (filename, data) in enumerate(analysis.items(), 1):
@@ -480,9 +514,37 @@ def generate_word_document(analysis):
         doc.add_paragraph(f"Summary: {data['summary']}")
         doc.add_paragraph(f"Description: {data['description']}")
         if data.get('flowchart_path') and os.path.exists(data['flowchart_path']):
-            doc.add_picture(data['flowchart_path'], width=docx.shared.Inches(5))
-            caption_prefix = session.get('author_details', {}).get('caption_prefix', 'Fig.')
-            doc.add_paragraph(f"{caption_prefix} {i}: Flowchart for {filename}")
+            try:
+                # Open image to get dimensions
+                img = Image.open(data['flowchart_path'])
+                img_width, img_height = img.size
+
+                # Define page constraints (Letter size, 1-inch margins)
+                max_page_width = Inches(6.5)  # 8.5 - 1 - 1
+                max_page_height = Inches(9.0)  # 11 - 1 - 1
+
+                # Calculate scaling factor to fit within page
+                width_ratio = max_page_width / img_width
+                height_ratio = max_page_height / img_height
+                scale_factor = min(width_ratio, height_ratio, 1.0)  # Don't upscale
+
+                # Calculate new dimensions
+                new_width = Inches(img_width * scale_factor)
+                new_height = Inches(img_height * scale_factor)
+
+                # Add image with scaled dimensions
+                p = doc.add_paragraph()
+                run = p.add_run()
+                run.add_picture(data['flowchart_path'], width=new_width, height=new_height)
+                p.alignment = 1  # Center the image
+
+                # Add caption
+                caption_prefix = session.get('author_details', {}).get('caption_prefix', 'Fig.')
+                caption = doc.add_paragraph(f"{caption_prefix} {i}: Flowchart for {filename}")
+                caption.alignment = 1  # Center the caption
+            except Exception as e:
+                print(f"Error adding flowchart for {filename}: {e}")
+                doc.add_paragraph(f"Error: Could not add flowchart for {filename}")
 
     # Screenshots
     doc.add_heading('Screenshots', level=2)
