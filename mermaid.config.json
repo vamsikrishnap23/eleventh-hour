@@ -1,5 +1,0 @@
-{
-  "puppeteerConfig": {
-    "timeout": 60000
-  }
-}
