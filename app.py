@@ -249,7 +249,7 @@ def generate_pdf(analysis):
             w, h = desc_para.wrapOn(p, 400, 200)
             desc_para.drawOn(p, 100, y_position - h)
             y_position -= (h + 20)
-            
+
             if data.get('flowchart_path') and os.path.exists(data['flowchart_path']):
                 try:
                     img = Image.open(data['flowchart_path'])
@@ -282,7 +282,8 @@ def generate_pdf(analysis):
                     error_para = Paragraph("Error: Could not add flowchart to PDF", style)
                     error_para.wrapOn(p, 400, 100)
                     error_para.drawOn(p, 100, y_position - 50)
-            
+
+
             # Page number
             p.setFont("Helvetica", 10)
             page_num = len(analysis.keys()) + 1  # Account for title page
@@ -356,8 +357,6 @@ def generate_llm_section(model, prompt):
             if section not in sections:
                 sections[section] = f'[Section "{section}" not generated]'
                 
-        # Debug parsed sections
-        print(f"\n=== PARSED SECTIONS ===\n{json.dumps(sections, indent=2)}\n=== END PARSED SECTIONS ===")
         
         return sections
     except Exception as e:
@@ -514,37 +513,9 @@ def generate_word_document(analysis):
         doc.add_paragraph(f"Summary: {data['summary']}")
         doc.add_paragraph(f"Description: {data['description']}")
         if data.get('flowchart_path') and os.path.exists(data['flowchart_path']):
-            try:
-                # Open image to get dimensions
-                img = Image.open(data['flowchart_path'])
-                img_width, img_height = img.size
-
-                # Define page constraints (Letter size, 1-inch margins)
-                max_page_width = Inches(6.5)  # 8.5 - 1 - 1
-                max_page_height = Inches(9.0)  # 11 - 1 - 1
-
-                # Calculate scaling factor to fit within page
-                width_ratio = max_page_width / img_width
-                height_ratio = max_page_height / img_height
-                scale_factor = min(width_ratio, height_ratio, 1.0)  # Don't upscale
-
-                # Calculate new dimensions
-                new_width = Inches(img_width * scale_factor)
-                new_height = Inches(img_height * scale_factor)
-
-                # Add image with scaled dimensions
-                p = doc.add_paragraph()
-                run = p.add_run()
-                run.add_picture(data['flowchart_path'], width=new_width, height=new_height)
-                p.alignment = 1  # Center the image
-
-                # Add caption
-                caption_prefix = session.get('author_details', {}).get('caption_prefix', 'Fig.')
-                caption = doc.add_paragraph(f"{caption_prefix} {i}: Flowchart for {filename}")
-                caption.alignment = 1  # Center the caption
-            except Exception as e:
-                print(f"Error adding flowchart for {filename}: {e}")
-                doc.add_paragraph(f"Error: Could not add flowchart for {filename}")
+            doc.add_picture(data['flowchart_path'], width=docx.shared.Inches(5))
+            caption_prefix = session.get('author_details', {}).get('caption_prefix', 'Fig.')
+            doc.add_paragraph(f"{caption_prefix} {i}: Flowchart for {filename}")
 
     # Screenshots
     doc.add_heading('Screenshots', level=2)
